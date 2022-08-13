@@ -24,8 +24,13 @@ export default async function({login, q, imports, data, account}, {enabled = fal
 
     //Querying api and format result (https://wakatime.com/developers#stats)
     console.debug(`metrics/compute/${login}/plugins > wakatime > querying api`)
-    const {data: {data: stats}} = await imports.axios.get(`${url}/api/v1/users/${user}/stats/${range}?api_key=${token}`)
-
+    const { data: { data: stats } } = await (async () => {
+      for (let i = 0; i <= 3; ++i) {
+        try {
+          return await imports.axios.get(`${url}/api/v1/users/${user}/stats/${range}?api_key=${token}`);
+        } catch{}
+      }
+    })()
     const projectStats = stats.projects?.map(({name, percent, total_seconds: total}) => ({name, percent: percent / 100, total})).sort((a, b) => b.percent - a.percent)
     const projects = showOnlyGitHubPublicRepos ? await pickOnlyGitHubPublicRepos({limit, login, axios: imports.axios, projects: projectStats}) : projectStats?.slice(0, limit)
 
